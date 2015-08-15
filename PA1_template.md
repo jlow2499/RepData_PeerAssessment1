@@ -1,0 +1,252 @@
+---
+title: "Peer Assessment 1 ~ Reproducible Research"
+author: "Jeremiah Lowhorn, Business Intelligence Manager, GC Services"
+date: "Tuesday, August 11, 2015"
+output: html_document
+---
+ Loading and preprocessing the data
+
+
+```r
+library(dplyr)
+library(ggplot2)
+
+activity <- read.csv("C:/Users/Jeremiah Lowhorn/Desktop/activity.csv",header=T)
+activity$date <- as.Date(activity$date,format="%m/%d/%Y")
+activity.drop <- activity[!is.na(activity$steps),]
+na.activity <- activity[is.na(activity$steps),]
+```
+
+What is mean total number of steps taken per day?
+
+1. Calculate the total number of steps taken per day.
+
+
+```r
+perDay<- activity %>%
+  na.omit() %>%
+  group_by(date) %>%
+  arrange(date) %>%
+  summarise(sum_of_steps=sum(steps),
+            mean_of_steps=mean(steps),
+            median_of_steps=median(steps))
+```
+
+2. If you do not understand the difference between a histogram and a barplot, research the difference between them. Make a histogram of the total number of steps taken each day.
+
+
+```r
+a <- ggplot(perDay,aes(x=sum_of_steps)) +
+  geom_histogram(binwidth=1000,fill="darkred",color="black") +
+  ggtitle(expression(atop("Histogram of Steps by Day"))) +
+  xlab("Sum of Steps by Day Grouping") + 
+  ylab("Count of Days") +
+  theme(plot.title=element_text(size=36,color="black")) +
+  theme(axis.title=element_text(size=20,color="black")) +
+  theme(axis.text=element_text(size=10,color="black"))
+
+print(a)
+```
+
+![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3-1.png) 
+
+3. Calculate and report the mean and median of the total number of steps taken per day.
+
+
+```r
+mean(perDay$sum_of_steps)
+```
+
+```
+## [1] 570608
+```
+
+```r
+median(perDay$sum_of_steps)
+```
+
+```
+## [1] 570608
+```
+
+What is the average daily activity pattern?
+1. Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis).
+
+
+
+```r
+perTimeInterval <- activity %>%
+  na.omit() %>%
+  group_by(interval) %>%
+  summarise(sum_of_steps=sum(steps),
+            mean_of_steps=mean(steps),
+            median_of_steps=median(steps)) %>%
+  arrange(desc(mean_of_steps))
+
+b <- ggplot(perTimeInterval,aes(x=interval,y=mean_of_steps)) +
+  geom_line() +
+  ggtitle(expression(atop("Average Steps by Interval"))) +
+  xlab("5 Minute Interval") + 
+  ylab("Average Steps") +
+  theme(plot.title=element_text(size=36,color="black")) +
+  theme(axis.title=element_text(size=20,color="black")) +
+  theme(axis.text=element_text(size=10,color="black"))
+
+print(b)
+```
+
+```
+## Error in eval(expr, envir, enclos): object 'interval' not found
+```
+
+2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+
+
+```r
+perTimeInterval[1,]
+```
+
+```
+##   sum_of_steps mean_of_steps median_of_steps
+## 1       570608       37.3826               0
+```
+
+Imputing missing values
+Note that there are a number of days/intervals where there are missing values (coded as NA). The presence of missing days may introduce bias into some calculations or summaries of the data.
+
+1. Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs).
+
+
+```r
+sum(is.na(activity$steps))
+```
+
+```
+## [1] 2304
+```
+2. Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
+
+
+```r
+replace <- perTimeInterval[,c(1,3)]
+na.replace <- left_join(na.activity,replace)
+```
+
+```
+## Error: No common variables. Please specify `by` param.
+```
+
+```r
+na.replace <- na.replace[,-1]
+na.replace <- rename(na.replace,steps=mean_of_steps)
+```
+
+```
+## Error in rename(na.replace, steps = mean_of_steps): unused argument (steps = mean_of_steps)
+```
+3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
+
+
+```r
+activity.complete <- rbind(na.replace,activity.drop)
+```
+
+```
+## Error in as.Date.numeric(value): 'origin' must be supplied
+```
+
+```r
+row.names(activity.complete)<-NULL
+```
+
+4.Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+
+Answer: The mean has not changed because the missing values were replaced by the mean of the intervals. However, the median has changed due to the same reasoning as mention above. The days with missing values sum of steps is now the sum of means for those individual days. 
+
+
+```r
+perDay.complete<- activity.complete %>%
+  group_by(date) %>%
+  arrange(date) %>%
+  summarise(sum_of_steps=sum(steps),
+            mean_of_steps=mean(steps),
+            median_of_steps=median(steps))
+
+c <- ggplot(perDay.complete,aes(x=sum_of_steps)) +
+  geom_histogram(binwidth=1000,fill="darkblue",color="black") +
+  ggtitle(expression(atop("Histogram of Steps by Day ~ Complete"))) +
+  xlab("Sum of Steps by Day Grouping") + 
+  ylab("Count of Days") +
+  theme(plot.title=element_text(size=24,color="black")) +
+  theme(axis.title=element_text(size=20,color="black")) +
+  theme(axis.text=element_text(size=10,color="black"))
+
+print(c)
+```
+
+![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10-1.png) 
+
+```r
+mean(perDay.complete$sum_of_steps)
+```
+
+```
+## [1] 656737.5
+```
+
+```r
+median(perDay.complete$sum_of_steps)                                                                                      
+```
+
+```
+## [1] 656737.5
+```
+
+Are there differences in activity patterns between weekdays and weekends?
+
+For this part the weekdays() function may be of some help here. Use the dataset with the filled-in missing values for this part.
+
+1. Create a new factor variable in the dataset with two levels - "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.
+
+
+```r
+activity.complete<-activity.complete %>%
+  mutate(date,DOW=weekdays(date))
+
+activity.complete$DOW <- as.factor(activity.complete$DOW)
+
+library(plyr)
+activity.complete$DOW<-revalue(activity.complete$DOW,
+                               c("Monday"="weekday",
+                                 "Tuesday"="weekday",
+                                 "Wednesday"="weekday",
+                                 "Thursday"="weekday",
+                                 "Friday"="weekday",
+                                 "Saturday"="weekend",
+                                 "Sunday"="weekend"))
+```
+2. Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). See the README file in the GitHub repository to see an example of what this plot should look like using simulated data.
+
+
+```r
+perTimeInterval.complete <- activity.complete %>%
+  group_by(interval,DOW) %>%
+  summarise(mean_of_steps=mean(steps)) %>%
+  arrange(desc(mean_of_steps))
+
+library(ggplot2)
+g <- ggplot(perTimeInterval.complete,aes(x=interval,y=mean_of_steps)) +
+  geom_line() + 
+  facet_grid(DOW~.) +
+  ggtitle(expression(atop("Weekday vs Weekend"))) +
+  xlab("Interval") + 
+  ylab("Average Steps") +
+  theme(plot.title=element_text(size=36,color="black")) +
+  theme(axis.title=element_text(size=20,color="black")) +
+  theme(axis.text=element_text(size=10,color="black"))
+g
+```
+
+```
+## Error in layout_base(data, rows, drop = drop): At least one layer must contain all variables used for facetting
+```
