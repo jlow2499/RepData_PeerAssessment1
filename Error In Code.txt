@@ -1,1 +1,3 @@
-Looks like I forgot to usedetach("package:plyr", unload=TRUE) after I revalued activity.complete in my code... There are issues with the pipe operator and the plyr package. I can assure you it all works just fine, add that code after the revalue function and it will work flawlessly.
+Looks like I forgot to usedetach("package:plyr", unload=TRUE) after I revalued activity.complete in my code... 
+There are issues with the pipe operator and the plyr package. 
+I can assure you it all works just fine, add that code after the revalue function and it will work flawlessly.
